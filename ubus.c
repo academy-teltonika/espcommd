@@ -18,26 +18,36 @@ static int get_sensor(struct ubus_context *ctx, struct ubus_object *obj, struct 
                       const char *method, struct blob_attr *msg);
 
 enum {
-    ESP_UBUS_PORT,
-    ESP_UBUS_PIN,
-    ESP_UBUS_SENSOR,
-    ESP_UBUS_SENSOR_MODEL,
-    __ESP_MAX,
+    ESP_UBUS_TOGGLE_PIN_POLICY_PORT,
+    ESP_UBUS_TOGGLE_PIN_POLICY_PIN,
+    __ESP_UBUS_TOGGLE_PIN_POLICY_MAX,
 };
 
+enum {
+    ESP_UBUS_GET_SENSOR_POLICY_PORT,
+    ESP_UBUS_GET_SENSOR_POLICY_PIN,
+    ESP_UBUS_GET_SENSOR_POLICY_SENSOR,
+    ESP_UBUS_GET_SENSOR_POLICY_SENSOR_MODEL,
+    __ESP_UBUS_GET_SENSOR_POLICY_MAX,
+};
 
-static const struct blobmsg_policy esp_action_policy[] = {
-    [ESP_UBUS_PORT] = {.name = "port", .type = BLOBMSG_TYPE_STRING},
-    [ESP_UBUS_PIN] = {.name = "pin", .type = BLOBMSG_TYPE_INT32},
-    [ESP_UBUS_SENSOR] = {.name = "sensor", .type = BLOBMSG_TYPE_STRING},
-    [ESP_UBUS_SENSOR_MODEL] = {.name = "model", .type = BLOBMSG_TYPE_STRING},
+static const struct blobmsg_policy esp_toggle_pin_policy[] = {
+    [ESP_UBUS_TOGGLE_PIN_POLICY_PORT] = {.name = "port", .type = BLOBMSG_TYPE_STRING},
+    [ESP_UBUS_TOGGLE_PIN_POLICY_PIN] = {.name = "pin", .type = BLOBMSG_TYPE_INT32},
+};
+
+static const struct blobmsg_policy esp_get_sensor_policy[] = {
+    [ESP_UBUS_GET_SENSOR_POLICY_PORT] = {.name = "port", .type = BLOBMSG_TYPE_STRING},
+    [ESP_UBUS_GET_SENSOR_POLICY_PIN] = {.name = "pin", .type = BLOBMSG_TYPE_INT32},
+    [ESP_UBUS_GET_SENSOR_POLICY_SENSOR] = {.name = "sensor", .type = BLOBMSG_TYPE_STRING},
+    [ESP_UBUS_GET_SENSOR_POLICY_SENSOR_MODEL] = {.name = "model", .type = BLOBMSG_TYPE_STRING},
 };
 
 static struct ubus_method esp_methods[] = {
     UBUS_METHOD_NOARG("devices", devices_get),
-    UBUS_METHOD("on", pin_on, esp_action_policy),
-    UBUS_METHOD("off", pin_off, esp_action_policy),
-    UBUS_METHOD("get", get_sensor, esp_action_policy),
+    UBUS_METHOD("on", pin_on, esp_toggle_pin_policy),
+    UBUS_METHOD("off", pin_off, esp_toggle_pin_policy),
+    UBUS_METHOD("get", get_sensor, esp_get_sensor_policy),
 };
 
 static struct ubus_object_type esp_object_type = UBUS_OBJECT_TYPE("esp", esp_methods);
@@ -85,17 +95,17 @@ end:
 
 static int pin_on(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                   const char *method, struct blob_attr *msg) {
-    struct blob_attr *tb[__ESP_MAX];
-    blobmsg_parse(esp_action_policy, __ESP_MAX, tb, blob_data(msg), blob_len(msg));
-    if (tb[ESP_UBUS_PORT] == NULL) {
+    struct blob_attr *tb[__ESP_UBUS_TOGGLE_PIN_POLICY_MAX];
+    blobmsg_parse(esp_toggle_pin_policy, __ESP_UBUS_TOGGLE_PIN_POLICY_MAX, tb, blob_data(msg), blob_len(msg));
+    if (tb[ESP_UBUS_TOGGLE_PIN_POLICY_PORT] == NULL) {
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
-    char *port_name = blobmsg_get_string(tb[ESP_UBUS_PORT]);
+    char *port_name = blobmsg_get_string(tb[ESP_UBUS_TOGGLE_PIN_POLICY_PORT]);
 
-    if (tb[ESP_UBUS_PIN] == NULL) {
+    if (tb[ESP_UBUS_TOGGLE_PIN_POLICY_PIN] == NULL) {
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
-    int pin = blobmsg_get_u32(tb[ESP_UBUS_PIN]);
+    int pin = blobmsg_get_u32(tb[ESP_UBUS_TOGGLE_PIN_POLICY_PIN]);
 
     struct blob_buf blob_buf = {};
     blob_buf_init(&blob_buf, 0);
@@ -117,17 +127,17 @@ static int pin_on(struct ubus_context *ctx, struct ubus_object *obj, struct ubus
 // Duplicated code, but this is probably never going to have more than the ON/OFF variants
 static int pin_off(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                    const char *method, struct blob_attr *msg) {
-    struct blob_attr *tb[__ESP_MAX];
-    blobmsg_parse(esp_action_policy, __ESP_MAX, tb, blob_data(msg), blob_len(msg));
-    if (tb[ESP_UBUS_PORT] == NULL) {
+    struct blob_attr *tb[__ESP_UBUS_TOGGLE_PIN_POLICY_MAX];
+    blobmsg_parse(esp_toggle_pin_policy, __ESP_UBUS_TOGGLE_PIN_POLICY_MAX, tb, blob_data(msg), blob_len(msg));
+    if (tb[ESP_UBUS_TOGGLE_PIN_POLICY_PORT] == NULL) {
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
-    char *port_name = blobmsg_get_string(tb[ESP_UBUS_PORT]);
+    char *port_name = blobmsg_get_string(tb[ESP_UBUS_TOGGLE_PIN_POLICY_PORT]);
 
-    if (tb[ESP_UBUS_PIN] == NULL) {
+    if (tb[ESP_UBUS_TOGGLE_PIN_POLICY_PIN] == NULL) {
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
-    int pin = blobmsg_get_u32(tb[ESP_UBUS_PIN]);
+    int pin = blobmsg_get_u32(tb[ESP_UBUS_TOGGLE_PIN_POLICY_PIN]);
 
     struct blob_buf blob_buf = {};
     blob_buf_init(&blob_buf, 0);
@@ -148,27 +158,27 @@ static int pin_off(struct ubus_context *ctx, struct ubus_object *obj, struct ubu
 
 static int get_sensor(struct ubus_context *ctx, struct ubus_object *obj, struct ubus_request_data *req,
                       const char *method, struct blob_attr *msg) {
-    struct blob_attr *tb[__ESP_MAX];
-    blobmsg_parse(esp_action_policy, __ESP_MAX, tb, blob_data(msg), blob_len(msg));
-    if (tb[ESP_UBUS_PORT] == NULL) {
+    struct blob_attr *tb[__ESP_UBUS_GET_SENSOR_POLICY_MAX];
+    blobmsg_parse(esp_get_sensor_policy, __ESP_UBUS_GET_SENSOR_POLICY_MAX, tb, blob_data(msg), blob_len(msg));
+    if (tb[ESP_UBUS_GET_SENSOR_POLICY_PORT] == NULL) {
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
-    char *port_name = blobmsg_get_string(tb[ESP_UBUS_PORT]);
+    char *port_name = blobmsg_get_string(tb[ESP_UBUS_TOGGLE_PIN_POLICY_PORT]);
 
-    if (tb[ESP_UBUS_PIN] == NULL) {
+    if (tb[ESP_UBUS_GET_SENSOR_POLICY_PIN] == NULL) {
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
-    int pin = blobmsg_get_u32(tb[ESP_UBUS_PIN]);
+    int pin = blobmsg_get_u32(tb[ESP_UBUS_TOGGLE_PIN_POLICY_PIN]);
 
-    if (tb[ESP_UBUS_SENSOR] == NULL) {
+    if (tb[ESP_UBUS_GET_SENSOR_POLICY_SENSOR] == NULL) {
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
-    char *sensor = blobmsg_get_string(tb[ESP_UBUS_SENSOR]);
+    char *sensor = blobmsg_get_string(tb[ESP_ACTION_GET_SENSOR]);
 
-    if (tb[ESP_UBUS_SENSOR_MODEL] == NULL) {
+    if (tb[ESP_UBUS_GET_SENSOR_POLICY_SENSOR_MODEL] == NULL) {
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
-    char *model = blobmsg_get_string(tb[ESP_UBUS_SENSOR_MODEL]);
+    char *model = blobmsg_get_string(tb[ESP_UBUS_GET_SENSOR_POLICY_SENSOR_MODEL]);
 
     struct blob_buf blob_buf = {};
     blob_buf_init(&blob_buf, 0);
