@@ -77,10 +77,14 @@ static int devices_get(struct ubus_context *ctx, struct ubus_object *obj, struct
 
         void *device_table = blobmsg_open_table(&blob_buf, NULL);
         blobmsg_add_string(&blob_buf, "port", sp_get_port_name(port));
+
         int vid, pid;
         sp_get_port_usb_vid_pid(port, &vid, &pid); // Should never fail, as we've already checked the vid and pid.
-        blobmsg_add_u32(&blob_buf, "vid", vid);
-        blobmsg_add_u32(&blob_buf, "pid", pid);
+        char vid_pid_buf[32];
+        snprintf(vid_pid_buf, sizeof(vid_pid_buf), "%x", vid);
+        blobmsg_add_string(&blob_buf, "vid", vid_pid_buf);
+        snprintf(vid_pid_buf, sizeof(vid_pid_buf), "%x", pid);
+        blobmsg_add_string(&blob_buf, "pid", vid_pid_buf);
         blobmsg_close_table(&blob_buf, device_table);
     }
     blobmsg_close_array(&blob_buf, devices_array);
@@ -112,7 +116,7 @@ static int pin_on(struct ubus_context *ctx, struct ubus_object *obj, struct ubus
     struct EspAction esp_action = {
         .action_type = ESP_ACTION_ON,
         .port_name = port_name,
-        .pin = pin
+        .pin = pin,
     };
     struct EspActionResult result = execute_esp_action(esp_action);
     create_esp_action_result_message(&blob_buf, esp_action.action_type, result);

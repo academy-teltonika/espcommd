@@ -45,14 +45,14 @@ struct EspActionResult execute_esp_action(struct EspAction action) {
         case ESP_ACTION_OFF:
             snprintf(serial_write_buf, sizeof(serial_write_buf), ESP_TOGGLE_PIN_FORMAT, "off", action.pin);
             break;
-        // If any more get actions are added, this should be rewritten
+        // If any more "GET" actions are added, this should probably be rewritten
         case ESP_ACTION_GET_SENSOR:
             snprintf(serial_write_buf, sizeof(serial_write_buf), ESP_GET_SENSOR_FORMAT,
                      action.sensor, action.pin, action.model);
             break;
     }
 
-    char *serial_read_buf = (char *) malloc(ESP_SERIAL_READ_BUFFER_SIZE);
+    char *serial_read_buf = (char *) calloc(ESP_SERIAL_READ_BUFFER_SIZE, sizeof(char));
     if (serial_read_buf == NULL) {
         goto cleanup_port;
     }
@@ -101,7 +101,6 @@ static bool parse_esp_response(char *esp_response_json_string, struct EspRespons
         char *data = blobmsg_format_json(tb[ESP_RESPONSE_DATA], true);
         esp_response->data = data;
     }
-
 end:
     blob_buf_free(&blob_buf);
 
@@ -139,7 +138,9 @@ struct blob_buf *create_esp_action_result_message(struct blob_buf *result_blob_b
         blobmsg_add_string(result_blob_buf, "message", "Unknown ESP failure.");
         goto end;
     }
-    blobmsg_add_string(result_blob_buf, "message", esp_response.message);
+    if (esp_response.message != NULL) {
+        blobmsg_add_string(result_blob_buf, "message", esp_response.message);
+    }
 
     switch (esp_action) {
         case ESP_ACTION_GET_SENSOR:
