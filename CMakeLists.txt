@@ -1,15 +1,26 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.10)
 project(commesp C)
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 11)
 
-add_executable(commesp
-        main.c
-        ubus.c
-        ubus.h
-        serial.h
-        serial.c
-        esp.h
-        esp.c)
+file(GLOB SOURCES "src/*.c")
 
-target_link_libraries(commesp ubus ubox serialport blobmsg_json)
+add_executable(espcommd ${SOURCES})
+
+target_link_libraries(espcommd PRIVATE
+  ubus
+  ubox
+  serialport
+  blobmsg_json
+)
+
+target_compile_options(espcommd PRIVATE
+  -Wall
+  -Werror
+  -fsanitize=address
+  -g
+)
+
+target_link_options(espcommd PRIVATE
+  -fsanitize=address
+)
