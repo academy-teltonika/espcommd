@@ -29,18 +29,17 @@ check_port_for_esp(struct sp_port *port) {
     return ESP_RESULT_OK_IS_ESP;
 }
 
-// Result will not a full count of all esp ports on error.
+// On error, result will not be a full count of all esp ports.
 static enum UsbResult
 count_esp_ports(int *esp_port_count, struct sp_port **port_list) {
-    *esp_port_count = 0;
     for (int i = 0; port_list[i] != NULL; i++) {
         enum CheckEspPortResult result = check_port_for_esp(port_list[i]);
         switch (result) {
             case ESP_RESULT_OK_IS_ESP:
-                esp_port_count++;
+                (*esp_port_count)++;
                 break;
             case ESP_RESULT_OK_NOT_ESP:
-                continue;
+                break;
             default:
                 return USB_RESULT_ERR_UNKNOWN;
         }
@@ -49,22 +48,27 @@ count_esp_ports(int *esp_port_count, struct sp_port **port_list) {
     return USB_RESULT_OK;
 }
 
-// Result will not be a full list of filtered ports on error.
+// On error, Result will not be a full list of filtered ports.
 static enum UsbResult
-filter_esp_ports(struct sp_port **port_list_all, struct sp_port **port_list_esp) {
+filter_esp_ports(
+    struct sp_port **port_list_all,
+    struct sp_port **port_list_esp)
+{
     int port_list_esp_count = 0;
     for (int i = 0; port_list_all[i] != NULL; i++) {
         struct sp_port *port = port_list_all[i];
         enum CheckEspPortResult result = check_port_for_esp(port);
+        enum sp_return ret;
         switch (result) {
             case ESP_RESULT_OK_IS_ESP:
-                if (sp_copy_port(port, port_list_esp + port_list_esp_count) != SP_OK) {
+                ret = sp_copy_port(port, port_list_esp + port_list_esp_count);
+                if (ret  != SP_OK) {
                     return USB_RESULT_ERR_UNKNOWN;
                 }
                 port_list_esp_count++;
                 break;
             case ESP_RESULT_OK_NOT_ESP:
-                continue;
+                break;
             default:
                 return USB_RESULT_ERR_UNKNOWN;
         }
@@ -92,7 +96,14 @@ enumerate_esp_serial_ports(struct sp_port ***port_list) {
     }
 
     // NULL terminated array of filtered ports
-    port_list_esp = (struct sp_port **) calloc(esp_port_count + 1, sizeof(struct sp_port *));
+    port_list_esp = (struct sp_port **) calloc(
+        esp_port_count + 1,
+        sizeof(struct sp_port *)
+    );
+    if (port_list_esp == NULL) {
+        ret = USB_RESULT_ERR_UNKNOWN;
+        goto cleanup;
+    }
     ret = filter_esp_ports(port_list_all, port_list_esp);
 
 cleanup:
@@ -149,7 +160,7 @@ open_port(struct sp_port *port) {
 
     sp_free_config(config);
     if (sp_ret != SP_OK) {
-        return USB_RESULT_ERR_PORT_WRITE;
+        return USB_RESULT_ERR_UNKNOWN;
     }
 
     return USB_RESULT_OK;
@@ -168,7 +179,8 @@ write_and_await_response(
         return USB_RESULT_ERR_PORT_WRITE;
     }
 
-    if (sp_blocking_read(port, response_buf, read_bytes, 1500) <= 0) {
+    ret = sp_blocking_read(port, response_buf, read_bytes, 1500);
+    if (ret <= 0) {
         return USB_RESULT_ERR_PORT_READ;
     }
 

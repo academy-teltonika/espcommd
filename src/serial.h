@@ -13,10 +13,20 @@ enum UsbResult {
 
 extern const char *UsbResult_str[];
 
-enum UsbResult enumerate_esp_serial_ports(struct sp_port ***port_list);
+enum UsbResult
+enumerate_esp_serial_ports(struct sp_port ***port_list);
 
-enum UsbResult get_esp_port_by_name(const char *port_name, struct sp_port **port);
+enum UsbResult
+get_esp_port_by_name(const char *port_name, struct sp_port **port);
 
-enum UsbResult write_and_await_response(struct sp_port *port, const char *input_buf, int write_bytes,
-                                        char *response_buf, int read_bytes);
-enum UsbResult open_port(struct sp_port *port);
+enum UsbResult
+write_and_await_response(
+    struct sp_port *port,
+    const char *input_buf,
+    int write_bytes,
+    char *response_buf, int read_bytes
+);
+
+enum UsbResult
+open_port(struct sp_port *port);
+

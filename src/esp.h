@@ -23,11 +23,20 @@ struct EspActionResult {
     char *esp_response_string;
 };
 
-struct EspActionResult execute_esp_action(struct EspAction action);
+struct EspActionResult
+execute_esp_action(struct EspAction action);
 
-struct blob_buf *create_esp_action_result_message(struct blob_buf *result_blob_buf, enum EspActionType esp_action,
-                                                  struct EspActionResult esp_result);
+struct blob_buf *
+create_esp_action_result_message(
+    struct blob_buf *result_blob_buf,
+    enum EspActionType esp_action,
+    struct EspActionResult esp_result
+);
 
-struct blob_buf *create_usb_result_message(struct blob_buf *result_blob_buf, enum UsbResult usb_result);
+struct blob_buf *
+create_usb_result_message(
+    struct blob_buf *result_blob_buf,
+    enum UsbResult usb_result
+);
 
 void EspActionResult_free(struct EspActionResult *esp_action_result);

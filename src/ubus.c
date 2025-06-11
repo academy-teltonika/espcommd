@@ -122,18 +122,20 @@ devices_get(
     return UBUS_STATUS_OK;
 }
 
+// Return 1 for "on", 0 for "off" and -1 if neither.
 void
-get_pin_target_state_from_ubus_method(bool **pin_state, char *method) {
+get_pin_target_state_from_ubus_method(int *pin_state, char *method) {
     if (strncmp("on", method, 32) == 0) {
-        **pin_state = true;
+        *pin_state = 1;
         return;
     }
     if (strncmp("off", method, 32) == 0) {
-        **pin_state = false;
+        *pin_state = 0;
         return;
     }
 
-    *pin_state = NULL;
+    // Method was not "on" or "off".
+    *pin_state = -1;
     return;
 }
 
@@ -166,11 +168,11 @@ toggle_pin(
     struct blob_buf blob_buf = {};
     blob_buf_init(&blob_buf, 0);
 
-    bool *pin_target_state = NULL;
+    int pin_target_state = -1;
     get_pin_target_state_from_ubus_method(&pin_target_state, (char*) method);
-    assert(pin_target_state != NULL); // Ubus method, which called pin_toggle was not on or off.
+    assert(pin_target_state != -1); // Ubus method, which called pin_toggle was not on or off.
 
-    enum EspActionType esp_action_type = *pin_target_state ? ESP_ACTION_ON : ESP_ACTION_OFF; 
+    enum EspActionType esp_action_type = pin_target_state == 1 ? ESP_ACTION_ON : ESP_ACTION_OFF; 
     struct EspAction esp_action = {
         .action_type = esp_action_type,
         .port_name = port_name,

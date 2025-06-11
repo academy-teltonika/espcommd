@@ -1,7 +1,9 @@
 #include "esp.h"
+#include "serial.h"
 #include <stdio.h>
 
 #define ESP_SERIAL_READ_BUFFER_SIZE 1024
+#define ESP_SERIAL_WRITE_BUFFER_SIZE 1024
 #define ESP_TOGGLE_PIN_FORMAT "{\"action\": \"%s\", \"pin\": %i}"
 #define ESP_GET_SENSOR_FORMAT "{\"action\": \"get\", \"sensor\": \"%s\", \"pin\": %i, \"model\": \"%s\"}"
 
@@ -28,8 +30,6 @@ esp_response_verification_policy[] = {
 static struct EspResponse EspResponse_new(void);
 
 static void EspResponse_free(struct EspResponse *esp_response);
-
-
 
 struct EspActionResult
 execute_esp_action(struct EspAction action) {
@@ -83,6 +83,8 @@ execute_esp_action(struct EspAction action) {
 
     result.usb_result = open_port(port);
     if (result.usb_result != USB_RESULT_OK) {
+        free(serial_read_buf);
+        serial_read_buf = NULL;
         goto cleanup_open_port;
     }
 
@@ -93,7 +95,7 @@ execute_esp_action(struct EspAction action) {
         serial_read_buf,
         ESP_SERIAL_READ_BUFFER_SIZE
     );
-    if (result.usb_result != SP_OK) {
+    if (result.usb_result != USB_RESULT_OK) {
         free(serial_read_buf);
         serial_read_buf = NULL;
     }
@@ -112,6 +114,7 @@ parse_esp_response(char *esp_response_json_string, struct EspResponse *esp_respo
     bool parse_success = true;
     struct blob_buf blob_buf = {};
     blob_buf_init(&blob_buf, 0);
+    // blobbuf takes ownership of esp_response_json_string
     blobmsg_add_json_from_string(&blob_buf, esp_response_json_string);
     struct blob_attr *tb[__ESP_RESPONSE_MAX];
     blobmsg_parse(
