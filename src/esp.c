@@ -21,7 +21,7 @@ struct EspResponse {
 };
 
 static const struct blobmsg_policy
-esp_response_verification_policy[] = {
+esp_response_policy[] = {
     [ESP_RESPONSE_RC] = {.name = "rc", .type = BLOBMSG_TYPE_INT32},
     [ESP_RESPONSE_MSG] = {.name = "msg", .type = BLOBMSG_TYPE_STRING},
     [ESP_RESPONSE_DATA] = {.name = "data", .type = BLOBMSG_TYPE_TABLE},
@@ -118,7 +118,7 @@ parse_esp_response(char *esp_response_json_string, struct EspResponse *esp_respo
     blobmsg_add_json_from_string(&blob_buf, esp_response_json_string);
     struct blob_attr *tb[__ESP_RESPONSE_MAX];
     blobmsg_parse(
-        esp_response_verification_policy,
+        esp_response_policy,
         __ESP_RESPONSE_MAX,
         tb,
         blob_data(blob_buf.head),

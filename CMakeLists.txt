@@ -8,19 +8,19 @@ file(GLOB SOURCES "src/*.c")
 add_executable(espcommd ${SOURCES})
 
 target_link_libraries(espcommd PRIVATE
-  ubus
-  ubox
-  serialport
-  blobmsg_json
+    ubus
+    ubox
+    serialport
+    blobmsg_json
 )
 
 target_compile_options(espcommd PRIVATE
-  -Wall
-  -Werror
-  -fsanitize=address
-  -g
+    -Wall
+    -Werror
+    -fsanitize=address
+    -g
 )
 
 target_link_options(espcommd PRIVATE
-  -fsanitize=address
+    -fsanitize=address
 )
