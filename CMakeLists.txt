@@ -15,12 +15,9 @@ target_link_libraries(espcommd PRIVATE
 )
 
 target_compile_options(espcommd PRIVATE
-    -Wall
-    -Werror
-    -fsanitize=address
-    -g
+    $<$<CONFIG:DEBUG>: -Wall -fsanitize=address -g >
 )
 
 target_link_options(espcommd PRIVATE
-    -fsanitize=address
+    $<$<CONFIG:DEBUG>: -fsanitize=address >
 )
