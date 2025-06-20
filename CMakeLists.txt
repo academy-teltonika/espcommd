@@ -21,3 +21,5 @@ target_compile_options(espcommd PRIVATE
 target_link_options(espcommd PRIVATE
     $<$<CONFIG:DEBUG>: -fsanitize=address >
 )
+
+install(TARGETS tuyad DESTINATION bin)
