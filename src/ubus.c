@@ -13,7 +13,6 @@ devices_get(
     struct blob_attr *msg
 );
 
-// TODO: move out to esp.c
 static int
 toggle_pin(
     struct ubus_context *ctx,
