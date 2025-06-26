@@ -11,4 +11,5 @@ make
 
 ## Dependencies
 
+ubus
 sigrok-libserialport
